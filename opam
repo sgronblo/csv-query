@@ -1,0 +1,22 @@
+opam-version: "1.2"
+name: "csv-query"
+version: "0.0.1"
+maintainer: "Sam Gronblom <sgronblo@gmail.com>"
+authors: "Sam Gronblom <sgronblo@gmail.com>"
+homepage: ""
+bug-reports: ""
+license: ""
+dev-repo: "https://github.com/sgronblo/csv-query"
+build: [
+  ["./configure" "--prefix=%{prefix}%"]
+  [make]
+]
+install: [make "install"]
+remove: ["ocamlfind" "remove" "csv-query"]
+depends: [
+  "ocamlfind" {build}
+  "angstrom"
+  "ppx_type_conv"
+  "ppx_sexp_conv"
+  "ounit"
+]

@@ -1,0 +1,14 @@
+(jbuild_version 1)
+
+(executables
+    (
+        (names (csv_query QueryParserTest))
+        (libraries (angstrom str ounit))
+        (preprocess (pps (ppx_sexp_conv)))
+    )
+)
+
+(alias
+ ((name    runtest)
+  (deps    (QueryParserTest.exe))
+  (action  (run ${<}))))
