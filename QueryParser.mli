@@ -1,6 +1,8 @@
-open MParser
+open Angstrom
 open Query
 
-val query_parser : (query, unit) MParser.t
+val query_parser : query Angstrom.t
 
-val parse_query : string -> query MParser.result
+val parse_query : string -> (query, string) result
+
+val parse_value : string -> (value, string) result

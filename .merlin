@@ -1,5 +1,16 @@
-B _build
-S *.ml
-PKG mparser
+B _build/default
+FLG -ppx "_build/default/.ppx/ppx_sexp_conv/ppx.exe --as-ppx"
+FLG -w -40
+PKG angstrom
+PKG bigarray
+PKG bytes
+PKG cstruct
+PKG oUnit.advanced
+PKG ocplib-endian
+PKG ocplib-endian.bigstring
 PKG ounit
+PKG result
+PKG sexplib
+PKG sexplib.0
 PKG str
+PKG unix

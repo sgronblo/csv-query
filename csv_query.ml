@@ -1,11 +1,13 @@
-open MParser
+open Angstrom
 open QueryParser
 open QueryExecutor
 
 let () =
     let query_string = Sys.argv.(1) in
     match parse_query query_string with
-        | Success parsed_query ->
+        | Ok parsed_query ->
+            print_string "Parsed query";
             execute_query parsed_query
-        | Failed (message, _) ->
+        | Error message ->
+            print_string "Failed to parse query";
             print_string message
