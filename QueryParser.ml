@@ -3,47 +3,48 @@ open Query
 
 let whitespace = satisfy (function
     | '\x20' | '\x0a' | '\x0d' | '\x09' -> true
-    | _ -> false)
+    | _ -> false) <?> "expected whitespace"
 
 let alphanum = satisfy (function
     | 'a'..'z' | 'A'..'Z' | '0'..'9' -> true
-    | _ -> false)
+    | _ -> false) <?> "expected alphanumeric char"
 
 let skip_string s =
-    string s *> return ()
+    string s *> return () <?> "expected string " ^ s
 
 let digit = satisfy (function
     | '0'..'9' -> true
-    | _ -> false)
+    | _ -> false) <?> "expected a digit"
 
 let pair = lift2 (fun x y -> (x, y))
 
 let blank =
-  satisfy (function '\t' | ' ' -> true | _ -> false)
+  satisfy (function '\t' | ' ' -> true | _ -> false) <?> "expected a tab or a space"
 
 let optional_p p =
     let to_some x = Some x in
     option None (to_some <$> p)
 
-let skip_char c = skip (fun parsed_char -> c = parsed_char)
+let skip_char c = skip (fun parsed_char -> c = parsed_char) <?> "expected a " ^ (String.make 1 c)
 
-let identifier_char = alphanum <|> char '_'
+let identifier_char = alphanum <|> char '_' <?> "expected an identifier char"
 
 let join_chars cl = String.concat "" (List.map (String.make 1) cl)
 
 let many1_chars char_parser =
     join_chars <$> many1 char_parser
 
-let table_file_name = many1_chars (identifier_char <|> char '.')
+let table_file_name = many1_chars (identifier_char <|> char '.') <?> "expected a table file name"
 
-let table_name = many1_chars identifier_char
+let table_name = many1_chars identifier_char <?> "expected a table name"
 
-let column_name = many1_chars identifier_char
+let column_name = many1_chars identifier_char <?> "expected a column name"
 
 let column_reference =
     optional_p (table_name <* skip_char '.') >>= fun maybe_table_name ->
     column_name >>= fun colname ->
     return (maybe_table_name, colname)
+    <?> "expected a column reference"
 
 let csv p =
     p >>= fun parsed_head ->
