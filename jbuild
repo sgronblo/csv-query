@@ -3,12 +3,13 @@
 (executables
     (
         (names (csv_query QueryParserTest))
-        (libraries (angstrom str ounit))
+        (libraries (angstrom core ounit qcheck str))
+        (ocamlc_flags (-g))
         (preprocess (pps (ppx_sexp_conv)))
     )
 )
 
 (alias
  ((name    runtest)
-  (deps    (QueryParserTest.exe))
+  (deps    (QueryParserTest.bc))
   (action  (run ${<}))))

@@ -16,7 +16,9 @@ remove: ["ocamlfind" "remove" "csv-query"]
 depends: [
   "ocamlfind" {build}
   "angstrom"
+  "core"
   "ppx_type_conv"
   "ppx_sexp_conv"
   "ounit"
+  "qcheck"
 ]
