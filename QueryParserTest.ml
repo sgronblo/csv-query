@@ -10,7 +10,7 @@ let unwrap_result = function
     | Ok a -> a
     | Error message -> assert_failure message
 
-let query_to_string q = Sexplib.Sexp.to_string (sexp_of_query q)
+let query_to_string q = Sexplib.Sexp.to_string_hum (sexp_of_query q)
 
 let parse_test query_string expected_query test_ctxt =
     let input_string = `String query_string in
