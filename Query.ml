@@ -81,17 +81,17 @@ example query: select e.name, d.name from employees.csv as e join departments.cs
 *)
 
 let print_table = function
-    | Table table_name -> "(Table " ^ table_name ^ ")"
+    | Table table_name -> table_name
 
 let print_column = function
     | Column_reference (Some table_name, column_name) -> table_name ^ "." ^ column_name
     | Column_reference (None, column_name) -> column_name
 
 let print_projection = function
-    | All -> "All"
+    | All -> "*"
     | Columns columns ->
         let column_names = List.map print_column columns in
-        "[" ^ String.concat ", " column_names ^ "]"
+        String.concat ", " column_names
 
 let print_binary_operator = function
     | Eq Eq_equals -> "="
@@ -115,11 +115,11 @@ let rec print_expression = function
     | Binary (operator, e1, e2) -> print_expression e1 ^ " " ^ (print_binary_operator operator) ^ " " ^ (print_expression e2)
     | Unary (_, e) -> "-" ^ (print_expression e)
 
-let print_query = function
+let to_query_string = function
     | Select (projection, table, option_expression) ->
         let projection_string = print_projection projection in
         let table_string = print_table table in
         let where_string = match option_expression with
             | None -> ""
             | Some e -> " where " ^ print_expression e in
-        "select (" ^ projection_string ^ ", " ^ table_string ^ where_string ^ ")"
+        "select " ^ projection_string ^ " from " ^ table_string ^ where_string
