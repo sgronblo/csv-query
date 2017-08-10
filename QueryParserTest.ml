@@ -1,4 +1,5 @@
 open Angstrom
+open Core
 open OUnit2
 open Query
 open QueryParser
@@ -64,7 +65,6 @@ let binary_op_gen = QCheck.Gen.(
 
 let expression_generator column_names = QCheck.Gen.(sized @@ fix
     (fun self n ->
-        print_endline ("expression " ^ string_of_int n);
         match n with
         | 0 -> frequency [
             (1, return Nil);
@@ -75,7 +75,7 @@ let expression_generator column_names = QCheck.Gen.(sized @@ fix
         ]
         | n -> frequency [
             (1, map2 (fun op e -> Unary (op, e)) unary_op_gen (self (n - 1)));
-            (3, map3 (fun op e e2 -> Binary (op, e, e2)) binary_op_gen (self (n - 1)) (self (n - 1)));
+            (3, map3 (fun op e e2 -> Binary (op, e, e2)) binary_op_gen (self (n / 2)) (self (n / 2)));
         ]
     ))
 
@@ -88,7 +88,7 @@ let identifier_chars =
     char_sequence 'a' 'z' ^
     char_sequence 'A' 'Z'
 
-let identifier_char_gen st = String.get identifier_chars (Random.State.int st (Core.String.length identifier_chars))
+let identifier_char_gen st = String.get identifier_chars (Caml.Random.State.int st (Core.String.length identifier_chars))
 
 let identifier_string_gen =
     QCheck.string_gen_of_size QCheck.Gen.(1--10) identifier_char_gen
@@ -100,23 +100,49 @@ let query_generator = QCheck.Gen.(
         (1, return None);
         (4, map some (expression_generator column_names))
     ] >>= fun where ->
-    let column_references = List.map (fun c -> Column_reference (None, c)) column_names in
+    let column_references = List.map ~f:(fun c -> Column_reference (None, c)) column_names in
     let projection = Columns column_references in
     return (Select (projection, Table table_name, where))
 )
 
+let boolean_literal b = Boolean_literal b
+let string_literal s = String_literal s
+
+let rec expression_iter expression =
+    let open QCheck.Shrink in
+    let open QCheck.Iter in
+    match expression with
+    | Nil -> empty
+    | Boolean_literal b -> return (not b) >|= boolean_literal
+    | String_literal s -> QCheck.Shrink.string s >|= string_literal
+    | Numeric_literal n -> empty
+    | Reference _ -> empty
+    | Unary (_, expression) ->
+        return expression <+> expression_iter expression
+    | Binary (_, e1, e2) ->
+        of_list [e1; e2] <+> expression_iter e1 <+> expression_iter e2
+
+let shrink_query (Select (projection, table, optional_condition)) =
+    let open QCheck.Iter in
+    let update_condition c = Select (projection, table, Some c) in
+    match optional_condition with
+    | None -> empty
+    | Some expression ->
+        expression_iter expression >|= update_condition
+
 let arbitrary_query = QCheck.make
     ~print:query_to_string
+    ~shrink:shrink_query
     query_generator
 
 let serializing_and_parsing =
     QCheck.Test.make
-        ~count:1
+        ~count:100
         ~name:"parsing a serialized random query"
         arbitrary_query
         (fun q ->
             let query_string = to_query_string q in
-            print_endline ("generated query " ^ query_string);
+            (* print_endline ("generated query " ^ query_string); *)
             match parse_query query_string with
             | Ok reconstructed_query ->
                 if q <> reconstructed_query
@@ -128,7 +154,7 @@ let serializing_and_parsing =
                         query_string ^
                         "\n -> \n" ^
                         query_to_string reconstructed_query in
-                    print_endline failure_message;
+                    (* print_endline failure_message; *)
                     QCheck.Test.fail_report failure_message
                 else true
             | Error msg ->
@@ -138,7 +164,7 @@ let serializing_and_parsing =
                     query_string ^
                     " -> " ^
                     msg in
-                print_endline failure_message;
+                (* print_endline failure_message; *)
                 QCheck.Test.fail_report failure_message)
 
 let suite = "select query suite" >:::
