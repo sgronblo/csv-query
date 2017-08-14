@@ -108,12 +108,12 @@ let print_binary_operator = function
 let rec print_expression = function
     | Nil -> "nil"
     | Boolean_literal b -> string_of_bool b
-    | String_literal s -> s
+    | String_literal s -> "\"" ^ s ^ "\""
     | Numeric_literal n -> string_of_float n
     | Reference (None, cn) -> cn
     | Reference (Some table_name, cn) -> table_name ^ "." ^ cn
-    | Binary (operator, e1, e2) -> print_expression e1 ^ " " ^ (print_binary_operator operator) ^ " " ^ (print_expression e2)
-    | Unary (_, e) -> "-" ^ (print_expression e)
+    | Binary (operator, e1, e2) -> "(" ^ print_expression e1 ^ " " ^ (print_binary_operator operator) ^ " " ^ (print_expression e2) ^ ")"
+    | Unary (_, e) -> "-(" ^ (print_expression e) ^ ")"
 
 let to_query_string = function
     | Select (projection, table, option_expression) ->
