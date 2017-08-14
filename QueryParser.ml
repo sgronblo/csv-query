@@ -89,7 +89,7 @@ let equality_operator =
     choice [
         string "=" *> return (Eq Eq_equals);
         string "!=" *> return (Eq Eq_not_equals)
-    ]
+    ] <?> "equality operator"
 
 let comparison_operator =
     choice [
@@ -97,22 +97,22 @@ let comparison_operator =
         string ">=" *> return (Comp Comp_greater_than_equals);
         string "<=" *> return (Comp Comp_less_than_equals);
         string "<" *> return (Comp Comp_less_than)
-    ]
+    ] <?> "comparison operator"
 
 let term_operator =
     choice [
         string "+" *> return (Term Term_plus);
         string "-" *> return (Term Term_minus);
-    ]
+    ] <?> "term operator"
 
 let factor_operator =
     choice [
         string "*" *> return (Factor Factor_mult);
         string "/" *> return (Factor Factor_div);
-    ]
+    ] <?> "factor operator"
 
 let unary_operator =
-    string "-" *> return Unary_minus
+    string "-" *> return Unary_minus <?> "unary operator"
 
 let right_recursive p op_p sep_p =
     p >>= fun lhs ->
