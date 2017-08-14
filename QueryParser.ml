@@ -134,7 +134,7 @@ let expression =
                 string "false" *> return (Boolean_literal false);
                 string "true" *> return (Boolean_literal true);
                 string "nil" *> return Nil;
-                (many1_chars digit >>| fun n -> Numeric_literal (float_of_string n));
+                (numeric_literal >>| fun n -> Numeric_literal n);
                 (column_reference >>| fun c -> Reference c);
                 skip_char '(' *> e_parser <* skip_char ')'
             ] in
