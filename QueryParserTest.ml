@@ -14,8 +14,7 @@ let unwrap_result = function
 let query_to_string q = Sexplib.Sexp.to_string_hum (sexp_of_query q)
 
 let parse_test query_string expected_query test_ctxt =
-    let input_string = `String query_string in
-    let actual_query = unwrap_result (parse_only query_parser input_string) in
+    let actual_query = unwrap_result (parse_query query_string) in
     let error_msg = "Expected query: " ^ (query_to_string expected_query) ^ " was not equal to actual query: " ^ (query_to_string actual_query) in
     assert_equal ~msg:error_msg actual_query expected_query
 
