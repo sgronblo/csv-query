@@ -127,6 +127,13 @@ let right_recursive p op_p sep_p =
         let actual_p = Lazy.force(next_p) in
         actual_p <|> (lazy_attempt_choice remaining_p) *)
 
+let escaped_char =
+    choice [
+        char '\\' *> any_char;
+        satisfy (fun c -> c <> '\\' && c <> '"')
+    ]
+
+let any_escaped_string = many escaped_char
 let expression =
     fix (fun e_parser ->
         let primary =
@@ -136,6 +143,8 @@ let expression =
                 string "nil" *> return Nil;
                 (numeric_literal >>| fun n -> Numeric_literal n);
                 (column_reference >>| fun c -> Reference c);
+                (skip_char '"' *> any_escaped_string <* skip_char '"' >>|
+                    fun char_list -> String_literal (join_chars char_list));
                 skip_char '(' *> e_parser <* skip_char ')'
             ] in
         let rec unary () =
