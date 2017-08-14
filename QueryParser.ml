@@ -193,7 +193,7 @@ let state_to_verbose_result = function
     | Done (_, v) -> Ok v
     | Fail (unconsumed, marks, msg) ->
         let remaining_big_string = (Core.Bigstring.sub unconsumed.buffer ~pos:unconsumed.off ~len:unconsumed.len) in
-        let combined_msg = fail_to_string marks msg ^ " with unconsumed: " ^ Core.Bigstring.to_string remaining_big_string in
+        let combined_msg = fail_to_string marks msg ^ " with unconsumed: `" ^ Core.Bigstring.to_string remaining_big_string ^ "`" in
         Error combined_msg
 
 let parse_query s =
