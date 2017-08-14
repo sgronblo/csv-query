@@ -185,5 +185,18 @@ let value_parser =
 let parse_value input_string =
     parse_only value_parser (`String input_string)
 
+let fail_to_string marks err =
+    String.concat " > " marks ^ ": " ^ err
+
+let state_to_verbose_result = function
+    | Buffered.Partial _ -> Error "incomplete input"
+    | Done (_, v) -> Ok v
+    | Fail (unconsumed, marks, msg) ->
+        let remaining_big_string = (Core.Bigstring.sub unconsumed.buffer ~pos:unconsumed.off ~len:unconsumed.len) in
+        let combined_msg = fail_to_string marks msg ^ " with unconsumed: " ^ Core.Bigstring.to_string remaining_big_string in
+        Error combined_msg
+
 let parse_query s =
-    parse_only query_parser (`String s)
+    let initial_parser_state = Buffered.parse ~input:(`String s) query_parser in
+    let final_parser_state = Buffered.feed initial_parser_state `Eof in
+    state_to_verbose_result final_parser_state
