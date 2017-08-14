@@ -148,6 +148,7 @@ let expression =
                 skip_char '(' *> e_parser <* skip_char ')'
             ] in
         let rec unary () =
+            (numeric_literal >>| fun n -> Numeric_literal n) <|>
             (unary_operator >>= fun operator ->
             whitespace *>
             unary () >>= fun p ->
