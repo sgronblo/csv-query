@@ -36,8 +36,14 @@ let parse_where_query_boolean_literal =
 let parse_where_query_boolean_column_reference =
     parse_test "select * from employees.csv where is_retired" (Select (All, Table "employees.csv", Some (Reference (None, "is_retired"))))
 
-let parse_where_query_numeric_comparison =
+let parse_where_query_numeric_equality =
     parse_test "select * from employees.csv where id = 666" (Select (All, Table "employees.csv", Some (Binary ((Eq Eq_equals), Reference (None, "id"), Numeric_literal 666.))))
+
+let parse_where_query_numeric_comparison_a =
+    parse_test "select * from employees.csv where age > 65" (Select (All, Table "employees.csv", Some (Binary ((Comp Comp_greater_than), Reference (None, "age"), Numeric_literal 65.))))
+
+let parse_where_query_numeric_comparison_b =
+    parse_test "select * from employees.csv where 2 >= 4" (Select (All, Table "employees.csv", Some (Binary ((Comp Comp_greater_than_equals), Numeric_literal 2., Numeric_literal 65.))))
 
 let some x = Some x
 
@@ -232,7 +238,9 @@ let suite = "select query suite" >:::
         "parsing a simple query with prefixed columns" >:: parse_simple_projection_query_with_prefixed_columns;
         "parsing a simple query with a where with a boolean literal" >:: parse_where_query_boolean_literal;
         "parsing a simple query with a where with a boolean column reference" >:: parse_where_query_boolean_column_reference;
-        "parsing a simple query with a numeric comparison" >:: parse_where_query_numeric_comparison;
+        "parsing a simple query with a numeric equality" >:: parse_where_query_numeric_equality;
+        "parsing a simple query with a numeric comparison a" >:: parse_where_query_numeric_comparison_a;
+        "parsing a simple query with a numeric comparison b" >:: parse_where_query_numeric_comparison_b;
         QCheck_runner.to_ounit2_test serializing_and_parsing
     ]
 
