@@ -142,29 +142,23 @@ let serializing_and_parsing =
         arbitrary_query
         (fun q ->
             let query_string = to_query_string q in
-            (* print_endline ("generated query " ^ query_string); *)
             match parse_query query_string with
             | Ok reconstructed_query ->
                 if q <> reconstructed_query
                 then
                     let failure_message =
-                        "\n" ^
-                        query_to_string q ^
-                        "\n -> \n" ^
+                        " -> \n\"" ^
                         query_string ^
-                        "\n -> \n" ^
+                        "\"\n -> \n" ^
                         query_to_string reconstructed_query in
-                    (* print_endline failure_message; *)
                     QCheck.Test.fail_report failure_message
                 else true
             | Error msg ->
                 let failure_message =
-                    query_to_string q ^
-                    " -> " ^
+                    " -> \"" ^
                     query_string ^
-                    " -> " ^
+                    "\" -> " ^
                     msg in
-                (* print_endline failure_message; *)
                 QCheck.Test.fail_report failure_message)
 
 let suite = "select query suite" >:::
