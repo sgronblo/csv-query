@@ -22,7 +22,7 @@ let parse_test query_string expected_query test_ctxt =
 (*let parse_column_reference text_ctxt =
     let actual = column_reference "employees.name" (Column_reference (Some "employees", "name"))*)
 
- let parse_simple_all_projection_query =
+let parse_simple_all_projection_query =
     parse_test "select * from helloworld.csv" (Select (All, Table "helloworld.csv", None))
 
 let parse_simple_projection_query_with_prefixed_columns =
@@ -42,39 +42,104 @@ let parse_where_query_numeric_comparison =
 
 let some x = Some x
 
-let unary_op_gen = QCheck.Gen.(
-    oneof [
-        return Unary_minus
-    ]
-)
+let unary_op_gen = QCheck.Gen.oneofl [
+    Unary_minus
+]
 
-let binary_op_gen = QCheck.Gen.(
-    oneof [
-        return (Eq Eq_equals);
-        return (Eq Eq_not_equals);
-        return (Comp Comp_greater_than);
-        return (Comp Comp_greater_than_equals);
-        return (Comp Comp_less_than);
-        return (Comp Comp_less_than_equals);
-        return (Term Term_minus);
-        return (Term Term_plus);
-        return (Factor Factor_div);
-        return (Factor Factor_mult);
+let equality_op_gen = QCheck.Gen.oneofl [
+    Eq Eq_equals;
+    Eq Eq_not_equals
+]
+
+let comparison_op_gen = QCheck.Gen.oneofl [
+    Comp Comp_greater_than;
+    Comp Comp_greater_than_equals;
+    Comp Comp_less_than;
+    Comp Comp_less_than_equals;
+]
+
+let arithmetic_op_gen = QCheck.Gen.oneofl [
+    Term Term_minus;
+    Term Term_plus;
+    Factor Factor_div;
+    Factor Factor_mult;
+]
+
+let boolean_op_gen = QCheck.Gen.oneof [
+    equality_op_gen;
+    comparison_op_gen
+]
+
+let binary_op_gen = QCheck.Gen.oneof [
+    equality_op_gen;
+    comparison_op_gen;
+    arithmetic_op_gen
+]
+
+let numeric_literal_gen =
+    QCheck.Gen.(float >|= (fun rand_n ->
+        Numeric_literal (float_of_string (string_of_float rand_n))))
+
+let boolean_literal_gen =
+    QCheck.Gen.(bool >|= (fun b -> Boolean_literal b))
+
+let string_literal_gen =
+    QCheck.Gen.(small_string >|= (fun s -> String_literal s))
+
+let expression_leaf column_names =
+    let open QCheck.Gen in
+    frequency [
+      (1, return Nil);
+      (2, boolean_literal_gen);
+      (2, string_literal_gen);
+      (2, numeric_literal_gen);
+      (2, oneofl column_names >|= fun c -> Reference (None, c))
     ]
-)
+
+let rec numeric_expression n =
+    let open QCheck.Gen in
+    arithmetic_op_gen >>= fun op ->
+    match n with
+    | 0 -> numeric_literal_gen
+    | n ->
+        numeric_expression (n / 2) >>= fun operand1 ->
+        numeric_expression (n / 2) >>= fun operand2 ->
+        return (Binary (op, operand1, operand2))
+and boolean_expression n =
+    let open QCheck.Gen in
+    match n with
+    | 0 -> boolean_literal_gen
+    | n ->
+        frequency [
+            (1, equality_expression (n / 2));
+            (1, comparison_expression (n / 2))
+        ]
+and comparison_expression n =
+    let open QCheck.Gen in
+    match n with
+    | 0 -> boolean_literal_gen
+    | n ->
+        comparison_op_gen >>= fun op ->
+        numeric_expression (n / 2) >>= fun operand1 ->
+        numeric_expression (n / 2) >>= fun operand2 ->
+        return (Binary (op, operand1, operand2))
+and equality_expression n =
+    let open QCheck.Gen in
+    equality_op_gen >>= fun eq_op ->
+    oneof [
+        pair (numeric_expression n) (numeric_expression n);
+        pair (boolean_expression n) (boolean_expression n);
+        pair (string_expression n) (string_expression n);
+    ] >>= fun (e1, e2) ->
+    return (Binary (eq_op, e1, e2))
+and string_expression n = string_literal_gen
 
 let expression_generator column_names = QCheck.Gen.(sized @@ fix
     (fun self n ->
         match n with
-        | 0 -> frequency [
-            (1, return Nil);
-            (2, bool >|= fun b -> Boolean_literal b);
-            (2, small_string >|= fun s -> String_literal s);
-            (2, float >|= fun n -> Numeric_literal n);
-            (2, oneofl column_names >|= fun c -> Reference (None, c))
-        ]
+        | 0 -> expression_leaf column_names
         | n -> frequency [
-            (1, map2 (fun op e -> Unary (op, e)) unary_op_gen (self (n - 1)));
+            (1, map2 (fun op e -> Unary (op, e)) unary_op_gen (numeric_expression (n - 1)));
             (3, map3 (fun op e e2 -> Binary (op, e, e2)) binary_op_gen (self (n / 2)) (self (n / 2)));
         ]
     ))
