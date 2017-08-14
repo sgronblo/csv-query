@@ -62,8 +62,25 @@ let projection_parser =
 let boolean_literal =
     string "true" <|> string "false" >>| fun x -> bool_of_string x
 
+let signed_integer_string =
+    optional_p (char '-') >>= fun optional_minus_sign ->
+    many1_chars digit >>= fun number_part ->
+    return (match optional_minus_sign with
+    | None -> number_part
+    | Some minus -> Core.String.of_char minus ^ number_part)
+
 let numeric_literal =
-    many1_chars digit >>| float_of_string
+    signed_integer_string >>= fun integral_part ->
+    optional_p (char '.' *> many1_chars digit) >>= fun optional_decimal_part ->
+    optional_p ((char 'e' <|> char 'E') *> signed_integer_string) >>= fun optional_sci_part ->
+    let sci_part = match optional_sci_part with
+    | None -> ""
+    | Some sci_digits -> "E" ^ sci_digits in
+    return (match optional_decimal_part with
+    | None -> float_of_string integral_part
+    | Some decimal_part ->
+        let final_number_string = integral_part ^ "." ^ decimal_part ^ sci_part in
+        float_of_string final_number_string)
 
 let string_literal =
     skip_char '"' *> many1_chars (blank <|> alphanum) <* skip_char '"'
