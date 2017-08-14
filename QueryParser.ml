@@ -150,7 +150,6 @@ let expression =
         let rec unary () =
             (numeric_literal >>| fun n -> Numeric_literal n) <|>
             (unary_operator >>= fun operator ->
-            whitespace *>
             unary () >>= fun p ->
             return (Unary (Unary_minus, p))) <|>
             primary in
