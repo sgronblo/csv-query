@@ -121,12 +121,6 @@ let right_recursive p op_p sep_p =
         | Some (op, rhs) -> Binary (op, lhs, rhs)
         | None -> lhs
 
-(* let rec lazy_attempt_choice = function
-    | [] -> fail "Could not match any parsers"
-    | next_p :: remaining_p ->
-        let actual_p = Lazy.force(next_p) in
-        actual_p <|> (lazy_attempt_choice remaining_p) *)
-
 let escaped_char =
     choice [
         char '\\' *> any_char;
