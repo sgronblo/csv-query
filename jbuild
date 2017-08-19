@@ -11,5 +11,5 @@
 
 (alias
  ((name    runtest)
-  (deps    (QueryParserTest.bc))
+  (deps    (QueryParserTest.exe))
   (action  (run ${<}))))
