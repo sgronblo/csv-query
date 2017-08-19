@@ -163,8 +163,10 @@ let identifier_char_gen st = String.get identifier_chars (Caml.Random.State.int 
 let identifier_string_gen =
     QCheck.string_gen_of_size QCheck.Gen.(1--10) identifier_char_gen
 
+let non_empty_small_list = QCheck.Gen.(list_size (1--10))
+
 let query_generator = QCheck.Gen.(
-    small_list identifier_string_gen.gen >>= fun column_names ->
+    non_empty_small_list identifier_string_gen.gen >>= fun column_names ->
     identifier_string_gen.gen >>= fun table_name ->
     frequency [
         (1, return None);
