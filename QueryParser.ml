@@ -9,9 +9,6 @@ let alphanum = satisfy (function
     | 'a'..'z' | 'A'..'Z' | '0'..'9' -> true
     | _ -> false) <?> "expected alphanumeric char"
 
-let skip_string s =
-    string s *> return () <?> "expected string " ^ s
-
 let digit = satisfy (function
     | '0'..'9' -> true
     | _ -> false) <?> "expected a digit"
@@ -24,8 +21,6 @@ let blank =
 let optional_p p =
     let to_some x = Some x in
     option None (to_some <$> p)
-
-let skip_char c = skip (fun parsed_char -> c = parsed_char) <?> "expected a " ^ (String.make 1 c)
 
 let identifier_char = alphanum <|> char '_' <?> "expected an identifier char"
 
@@ -41,14 +36,14 @@ let table_name = many1_chars identifier_char <?> "expected a table name"
 let column_name = many1_chars identifier_char <?> "expected a column name"
 
 let column_reference =
-    optional_p (table_name <* skip_char '.') >>= fun maybe_table_name ->
+    optional_p (table_name <* char '.') >>= fun maybe_table_name ->
     column_name >>= fun colname ->
     return (maybe_table_name, colname)
     <?> "expected a column reference"
 
 let csv p =
     p >>= fun parsed_head ->
-    many (skip_char ',' *> whitespace *> p) >>= fun parsed_rest ->
+    many (char ',' *> whitespace *> p) >>= fun parsed_rest ->
     return (parsed_head :: parsed_rest)
 
 let column_references_to_columns column_tuples =
@@ -83,7 +78,7 @@ let numeric_literal =
         float_of_string final_number_string)
 
 let string_literal =
-    skip_char '"' *> many1_chars (blank <|> alphanum) <* skip_char '"'
+    char '"' *> many1_chars (blank <|> alphanum) <* char '"'
 
 let equality_operator =
     choice [
@@ -138,9 +133,9 @@ let expression =
                 string "nil" *> return Nil;
                 (numeric_literal >>| fun n -> Numeric_literal n);
                 (column_reference >>| fun c -> Reference c);
-                (skip_char '"' *> any_escaped_string <* skip_char '"' >>|
+                (char '"' *> any_escaped_string <* char '"' >>|
                     fun char_list -> String_literal (join_chars char_list));
-                skip_char '(' *> e_parser <* skip_char ')'
+                char '(' *> e_parser <* char ')'
             ] in
         let rec unary () =
             (numeric_literal >>| fun n -> Numeric_literal n) <|>
@@ -160,16 +155,16 @@ let expression =
     )
 
 let where_parser =
-    skip_string "where" *>
+    string "where" *>
     whitespace *>
     expression
 
 let query_parser =
-    skip_string "select" *>
+    string "select" *>
     whitespace *>
     projection_parser >>= fun projection ->
     whitespace *>
-    skip_string "from" *>
+    string "from" *>
     whitespace *>
     table_file_name >>= fun tn ->
     optional_p (whitespace *> where_parser) >>= fun where_clause ->
