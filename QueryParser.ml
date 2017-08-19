@@ -114,13 +114,6 @@ let factor_operator =
 let unary_operator =
     string "-" *> return Unary_minus <?> "unary operator"
 
-let right_recursive p op_p sep_p =
-    p >>= fun lhs ->
-    let op_rhs = optional_p (pair (sep_p *> op_p) (sep_p *> p)) in
-    op_rhs >>| function
-        | Some (op, rhs) -> Binary (op, lhs, rhs)
-        | None -> lhs
-
 let escaped_char =
     choice [
         char '\\' *> any_char;
@@ -128,6 +121,14 @@ let escaped_char =
     ]
 
 let any_escaped_string = many escaped_char
+
+let right_recursive p op_p sep_p =
+    p >>= fun lhs ->
+    let op_rhs = optional_p (pair (sep_p *> op_p) (sep_p *> p)) in
+    op_rhs >>| function
+        | Some (op, rhs) -> Binary (op, lhs, rhs)
+        | None -> lhs
+
 let expression =
     fix (fun e_parser ->
         let primary =
