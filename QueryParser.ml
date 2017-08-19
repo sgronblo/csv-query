@@ -93,9 +93,9 @@ let equality_operator =
 
 let comparison_operator =
     choice [
-        string ">" *> return (Comp Comp_greater_than);
         string ">=" *> return (Comp Comp_greater_than_equals);
         string "<=" *> return (Comp Comp_less_than_equals);
+        string ">" *> return (Comp Comp_greater_than);
         string "<" *> return (Comp Comp_less_than)
     ] <?> "comparison operator"
 
