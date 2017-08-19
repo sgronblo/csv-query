@@ -87,6 +87,19 @@ let binary_op_gen = QCheck.Gen.oneof [
     arithmetic_op_gen
 ]
 
+let char_sequence start_char end_char =
+    let start_ascii = Core.Char.to_int start_char in
+    let end_ascii = Core.Char.to_int end_char in
+    String.init (end_ascii - start_ascii + 1) (fun i -> Core.Char.of_int_exn (start_ascii + i))
+
+let identifier_chars =
+    char_sequence 'a' 'z' ^
+    char_sequence 'A' 'Z'
+
+let identifier_char_gen st =
+    let random_int = Caml.Random.State.int st (Core.String.length identifier_chars - 1) in
+    String.get identifier_chars random_int
+
 let numeric_literal_gen =
     QCheck.Gen.(float >|= (fun rand_n ->
         Numeric_literal (float_of_string (string_of_float rand_n))))
@@ -95,7 +108,7 @@ let boolean_literal_gen =
     QCheck.Gen.(bool >|= (fun b -> Boolean_literal b))
 
 let string_literal_gen =
-    QCheck.Gen.(small_string >|= (fun s -> String_literal s))
+    QCheck.Gen.(small_string ~gen:identifier_char_gen >|= (fun s -> String_literal s))
 
 let expression_leaf column_names =
     let open QCheck.Gen in
@@ -154,17 +167,6 @@ let expression_generator column_names = QCheck.Gen.(sized @@ fix
             (3, map3 (fun op e e2 -> Binary (op, e, e2)) binary_op_gen (self (n / 2)) (self (n / 2)));
         ]
     ))
-
-let char_sequence start_char end_char =
-    let start_ascii = Core.Char.to_int start_char in
-    let end_ascii = Core.Char.to_int end_char in
-    String.init (end_ascii - start_ascii) (fun i -> Core.Char.of_int_exn (start_ascii + i))
-
-let identifier_chars =
-    char_sequence 'a' 'z' ^
-    char_sequence 'A' 'Z'
-
-let identifier_char_gen st = String.get identifier_chars (Caml.Random.State.int st (Core.String.length identifier_chars))
 
 let identifier_string_gen =
     QCheck.string_gen_of_size QCheck.Gen.(1--10) identifier_char_gen
