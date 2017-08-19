@@ -140,8 +140,8 @@ let expression =
         let rec unary () =
             (numeric_literal >>| fun n -> Numeric_literal n) <|>
             (unary_operator >>= fun operator ->
-            unary () >>= fun p ->
-            return (Unary (Unary_minus, p))) <|>
+            unary () >>= fun unary_value ->
+            return (Unary (operator, unary_value))) <|>
             primary in
         let factor =
             right_recursive (unary ()) factor_operator whitespace in
