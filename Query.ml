@@ -93,6 +93,8 @@ let print_projection = function
         let column_names = List.map print_column columns in
         String.concat ", " column_names
 
+let escape_string = String.escaped
+
 let print_binary_operator = function
     | Eq Eq_equals -> "="
     | Eq Eq_not_equals -> "!="
@@ -108,7 +110,7 @@ let print_binary_operator = function
 let rec print_expression = function
     | Nil -> "nil"
     | Boolean_literal b -> string_of_bool b
-    | String_literal s -> "\"" ^ s ^ "\""
+    | String_literal s -> "\"" ^ (escape_string s) ^ "\""
     | Numeric_literal n -> string_of_float n
     | Reference (None, cn) -> cn
     | Reference (Some table_name, cn) -> table_name ^ "." ^ cn
